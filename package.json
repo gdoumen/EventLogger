@@ -1,0 +1,38 @@
+{
+	"name": "gd-eventlog",
+	"version": "0.0.1",
+	"description": "A node module for event logging",
+	"scripts": {
+        "build": "tsc"
+    },
+	"keywords": [
+		"logging",
+		"Event logging",
+		"Logging",
+		"observability"
+	],
+	"author": {
+		"name": "Guido Doumen",
+		"email": "git@doumen-laumen.de"
+	},
+	"license": "MIT",
+	"engines": {
+		"node": ">=10.0.0"
+	},
+	"dependencies": {},
+	"devDependencies": {
+		"typescript": "^3.8.3"
+	},
+	"files": [
+		"lib/"
+	],
+	"directories": {
+		"example": "./sample",
+		"lib": "./src"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/gdoumen/EventLogger.git"
+	},
+	"bugs": "https://github.com/gdoumen/EventLogger/issues"
+}
