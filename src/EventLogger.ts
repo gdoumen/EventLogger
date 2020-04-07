@@ -1,34 +1,32 @@
 import Context from './Context'
-import  EventEmitter = require('events');
 import LogAdapter,{FilterFunc,registerLogAdapter,getLogAdapters,resetAdapters} from './LogAdapter';
 
-var loggers: Array<EventLogger> = [];
-
-const GlobalConfigDefault =  {
+var GlobalConfig : any =  {
     autoTimeStamp : true
 }
 
-var GlobalConfig:any = GlobalConfigDefault;
-
 export default class EventLogger {
     private context: Context;
+    private parent: EventLogger | undefined;
 
     constructor (name: string, parent?:EventLogger) {
+        this.parent = parent;
         let parentCtx = undefined;
+
         if ( parent!==undefined) {
             parentCtx = parent.context;
         }
-
         this.context = new Context(name,undefined,parentCtx);
-        let existingLogger= loggers.filter( (logger:EventLogger) => (logger.getName() == name) )        
-        if (existingLogger===undefined) 
-            loggers.push( this);
-        
     }
 
     getName() : string {
         return this.context.getName();
     }
+
+    getParent() : EventLogger|undefined {
+        return this.parent;
+    }
+
     setContext(context:Context){
         this.context = context;
     }
@@ -54,13 +52,18 @@ export default class EventLogger {
         adapters.forEach( adapter => adapter.log(name,data))
     }
 
+    // test only, don't use
+    _get() {
+        return this.context.get().data;
+    }
+
     static registerAdapter(  adapter: LogAdapter, filter?:FilterFunc ) {
         registerLogAdapter(adapter,filter);
     }
 
     static reset() {
         resetAdapters();
-        GlobalConfig = GlobalConfigDefault;
+        this.setGlobalConfig('autoTimeStamp', true)
     }
 
     static setGlobalConfig(key:string, value: any) : void{
