@@ -5,18 +5,31 @@ var GlobalConfig : any =  {
     autoTimeStamp : true
 }
 
+export interface IHash {
+    [details: string] : EventLogger;
+} 
+
+var loggers:IHash = {}
+
 export default class EventLogger {
     private context: Context;
     private parent: EventLogger | undefined;
 
     constructor (name: string, parent?:EventLogger) {
-        this.parent = parent;
-        let parentCtx = undefined;
-
-        if ( parent!==undefined) {
-            parentCtx = parent.context;
+        if ( parent!==undefined || loggers[name]===undefined) {
+            this.parent = parent;
+            let parentCtx = undefined;
+    
+            if ( parent!==undefined) {
+                parentCtx = parent.context;
+            }
+            
+            this.context = new Context(name,undefined,parentCtx);            
+            loggers[name] = this;
         }
-        this.context = new Context(name,undefined,parentCtx);
+        else {
+            this.context = loggers[name].context;
+        }
     }
 
     getName() : string {
@@ -35,15 +48,32 @@ export default class EventLogger {
         this.context.update(payload)
     }
 
-    log(str : string, ...args: any[] )  {
+    createEvent(str : string, ...args: any[] ) :{message:string} {
         let message = str;
         if ( args.length>0)
             message = message + " " + args.join(" ");
-        this.logEvent({message});
+        return {message};
     }
     
-    logEvent(event : any )  {
-        
+    log(str : string, ...args: any[] )  {
+        this.logEvent( this.createEvent(str,...args));
+    }
+
+    debug(str : string, ...args: any[] )  {
+        this.logEvent( this.createEvent(str,...args),'debug');
+    }
+    info(str : string, ...args: any[] )  {
+        this.logEvent( this.createEvent(str,...args),'info');
+    }
+    error(str : string, ...args: any[] )  {
+        this.logEvent( this.createEvent(str,...args),'error');
+    }
+
+    
+    logEvent(event : any,level?:string )  {
+        if (level!==undefined) {
+            event.level = level;
+        }
         let {name,data} = this.context.get(event);
         let adapters = getLogAdapters(name,data);
     
@@ -63,6 +93,7 @@ export default class EventLogger {
 
     static reset() {
         resetAdapters();
+        loggers = {}
         this.setGlobalConfig('autoTimeStamp', true)
     }
 

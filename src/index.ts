@@ -1,16 +1,13 @@
-import * as EventLogger from './EventLogger'
-import * as Context from './Context'
-import * as LogAdapter from './LogAdapter'
-import * as ConsoleAdpter from './Adapters/ConsoleAdapter'
+import EventLogger from './EventLogger'
+import Context from './Context'
+import LogAdapter from './LogAdapter'
+import ConsoleAdapter from './Adapters/ConsoleAdapter'
 
-let Adapters = {
-    ConsoleAdpter
-}
 
-export {
+export  {
     EventLogger,
     Context,
     LogAdapter,
-    Adapters
+    ConsoleAdapter
 }
 
