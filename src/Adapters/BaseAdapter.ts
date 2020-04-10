@@ -6,6 +6,9 @@ export default class BaseAdapter implements LogAdapter {
 
     toStr(o:Object) {
         let str:string = '';
+
+        if ( o===null) return 'null'
+
         let keys = Object.keys(o);
         let values = Object.values(o);
         let value : string;

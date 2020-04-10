@@ -34,7 +34,6 @@ describe('ConsoleAdapter',()=>{
         expect(mocked(console.log).mock.calls[0][0]).toBe('app\ttest');
         expect(mocked(console.log).mock.calls[0][1]).toBeUndefined
     });
-    
     test('event log',()=> {
         let LOG = new EventLogger("app");
         LOG.logEvent({message:'test1',str:'XX',int:1, boolean:true, object:{ a:1, b:2}, array:[ '1','2'], complex:[{z:1,y:[1,2]},{x:'10'}] })
@@ -46,6 +45,16 @@ describe('ConsoleAdapter',()=>{
         expect(mocked(console.log).mock.calls[0][4]).toBe("object:{a:1,b:2}");
         expect(mocked(console.log).mock.calls[0][5]).toBe("array:['1','2']");
         expect(mocked(console.log).mock.calls[0][6]).toBe("complex:[{z:1,y:[1,2]},{x:'10'}]");
+    });
+    
+    test('event log - exceptions',()=> {
+        let LOG = new EventLogger("app");
+        LOG.logEvent({message:'test1',nullTest:null, undTest:undefined, o:{nullTest:null, undTest:undefined} })
+    
+        expect(mocked(console.log).mock.calls[0][0]).toMatch(/.+\tapp\ttest1/);
+        expect(mocked(console.log).mock.calls[0][1]).toBe("nullTest:null");
+        expect(mocked(console.log).mock.calls[0][2]).toBe("undTest:undefined");
+        expect(mocked(console.log).mock.calls[0][3]).toBe("o:{nullTest:null,undTest:undefined}");
     });
 }) 
 
