@@ -1,8 +1,10 @@
 import EventLogger from './EventLogger'
 import Context from './Context';
+import BaseAdapter from './Adapters/BaseAdapter';
+import LogAdapter from './LogAdapter';
 
 describe ('Constructor',()=> {
-    beforeEach( ()=> {
+    afterEach( ()=> {
         EventLogger.reset();
     })
 
@@ -40,10 +42,85 @@ describe ('Constructor',()=> {
 
 })
 
+describe ('log levels',()=> {
+
+    class MockAdapter extends BaseAdapter implements LogAdapter {
+        log(context: string, event:any):void   {
+            // empty
+        } 
+    }
+    var mock = new MockAdapter ();
+
+    beforeEach( ()=> {
+        mock.log = jest.fn();
+        EventLogger.registerAdapter(mock);
+        EventLogger.setGlobalConfig('autoTimeStamp',false);
+    })
+    afterEach( ()=> {
+        EventLogger.reset();
+    })
+
+    test('no level set', ()=> {
+        let logger = new EventLogger('test');
+
+        logger.set({x:1});
+        logger.log('test')        
+        expect(mock.log).toHaveBeenCalledWith('test',{x:1,message:'test'})
+    })
+
+    test('debug', ()=> {
+        let logger = new EventLogger('test');
+
+        logger.set({x:1});
+        logger.debug('test')        
+        logger.logEvent({message:'test1'},'debug')        
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'debug'})
+        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'debug'})
+    })
+
+    test('info', ()=> {
+        let logger = new EventLogger('test');
+
+        logger.set({x:1});
+        logger.info('test')        
+        logger.logEvent({message:'test1'},'info')        
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'info'})
+        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'info'})
+    })
+
+    test('error', ()=> {
+        let logger = new EventLogger('test');
+
+        logger.set({x:1});
+        logger.error('test')        
+        logger.logEvent({message:'test1'},'error')        
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'})
+        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'error'})
+    })
+
+    test('level is set in context and conflicts with method => method wins', ()=> {
+        let logger = new EventLogger('test');
+
+        logger.set({x:1,level:'info'});
+        logger.error('test')        
+        logger.logEvent({message:'test1'},'error')        
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'})
+        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'error'})
+    })
+
+    test('level in event conflicts with method parameter => method wins', ()=> {
+        let logger = new EventLogger('test');
+
+        logger.set({x:1});
+        logger.logEvent({message:'test',level:'debug'},'error')        
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'})
+    })
+
+})
 
 describe ('set/setContext',()=> {
 
-    beforeEach( ()=> {
+    afterEach( ()=> {
         EventLogger.reset();
     })
     test('no parent', ()=> {

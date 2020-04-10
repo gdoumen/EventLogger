@@ -59,7 +59,7 @@ export default class BaseAdapter implements LogAdapter {
 
         return { str, logs }
     }
-    
+    /* istanbul ignore next */
     log(context: string, event: any): void {
         // to be implemeted
     }
