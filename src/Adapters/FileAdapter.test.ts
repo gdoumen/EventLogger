@@ -20,20 +20,20 @@ describe('Constructor',()=>{
         let testAdapter = new FileAdapter();
 
         let opts = testAdapter['opts']; // workaround to access to  private member opts
-        expect(opts).toEqual({name:'logfile.json'})
+        expect(opts).toEqual({name:'logfile.json',fs:fs})
     });
 
     test('file name set',()=> {
         let testAdapter = new FileAdapter({name:'test.json'});
 
         let opts = testAdapter['opts']; // workaround to access to  private member opts
-        expect(opts).toEqual({name:'test.json'})
+        expect(opts.name).toEqual('test.json')
     });
     test('file name set to undefined',()=> {
         let testAdapter = new FileAdapter({name:undefined});
 
         let opts = testAdapter['opts']; // workaround to access to  private member opts
-        expect(opts).toEqual({name:'logfile.json'})
+        expect(opts.name).toEqual('logfile.json')
     });
 
 }) 

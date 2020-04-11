@@ -15,7 +15,7 @@ export default class BaseAdapter implements LogAdapter {
         let value : string;
         let self = this;
 
-        if (Array.isArray(o)) {
+        if (Array.isArray(o) && o.length === keys.length) {
             value = o.map( v=> typeof(v)==='object' ? self.toStr(v,depth+1) : typeof(v)!=='string' ? v : "'"+v+"'" ).join(',');
             str = '['+value+']'
             return str;
