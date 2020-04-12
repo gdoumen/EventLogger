@@ -1,5 +1,16 @@
 import LogAdapter  from "../LogAdapter";
 
+function isFunc(o:any):boolean {
+    return (typeof o === 'function')
+}
+
+function isSymbol(o:any):boolean {
+    let res = (typeof o === 'symbol');
+    if (res) {
+        console.log(o);
+    }
+    return res;
+}
 
 export default class BaseAdapter implements LogAdapter {
 
@@ -9,6 +20,9 @@ export default class BaseAdapter implements LogAdapter {
 
         if ( o===null) return 'null';
         if ( depth>3) return '{...}';
+        if ( isFunc(o) ) return '';
+        if ( isSymbol(o) ) return '';
+
 
         let keys = Object.keys(o);
         let values = Object.values(o);
