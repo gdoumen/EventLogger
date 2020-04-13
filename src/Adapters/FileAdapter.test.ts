@@ -35,6 +35,13 @@ describe('Constructor',()=>{
         let opts = testAdapter['opts']; // workaround to access to  private member opts
         expect(opts.name).toEqual('logfile.json')
     });
+    test('fs set',()=> {
+        let mockFS = {appendFile:jest.fn()}
+        let testAdapter = new FileAdapter({fs:mockFS});
+
+        let opts = testAdapter['opts']; // workaround to access to  private member opts
+        expect(opts.fs).toEqual(mockFS)
+    });
 
 }) 
 
@@ -89,6 +96,17 @@ describe('logging',()=>{
         expect(calls[0][0]).toBe('testfile.json')    
     });
 
+
+    test('fs changed in opts',()=> {
+        EventLogger.setGlobalConfig('autoTimeStamp',false);
+        let mockFS = {appendFile:jest.fn()}
+        mockAdapter['opts'].fs = mockFS;
+
+
+        let LOG = new EventLogger("app");
+        LOG.log('test')
+        expect(mockFS.appendFile).toBeCalled();
+    });
 
 }) 
 

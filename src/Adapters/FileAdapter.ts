@@ -28,10 +28,7 @@ export default class FileAdapter extends BaseAdapter implements LogAdapter  {
     log(context: string, event: any): void {
         event.context = context;
 
-        if ( this.opts.fs===undefined)
-            fs.appendFile(this.opts.name, this.toStr(event)+'\n','utf8', nop)
-        else 
-            this.opts.fs.appendFile(this.opts.name, this.toStr(event)+'\n','utf8', nop)
+        this.opts.fs.appendFile(this.opts.name, this.toStr(event,-1)+'\n','utf8', nop)
     }
 
 }

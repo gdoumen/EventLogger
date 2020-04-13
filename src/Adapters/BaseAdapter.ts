@@ -1,27 +1,30 @@
 import LogAdapter  from "../LogAdapter";
 
+const MAX_DEPTH = 3;
+
 function isFunc(o:any):boolean {
     return (typeof o === 'function')
 }
 
+function isClass(o:any):boolean {
+    return (isFunc(o) && o.prototype!==undefined && o.prototype.constructor!==undefined)
+}
+
 function isSymbol(o:any):boolean {
-    let res = (typeof o === 'symbol');
-    if (res) {
-        console.log(o);
-    }
-    return res;
+    return (typeof o === 'symbol');
 }
 
 export default class BaseAdapter implements LogAdapter {
 
 
-    toStr(o:Object,depth:number=0) {
+    toStr(o:Object,depth:number=0):string {
         let str:string = '';
 
         if ( o===null) return 'null';
-        if ( depth>3) return '{...}';
+        if ( depth>=MAX_DEPTH) return '{...}';
+        if ( isClass(o) ) return 'class '+o['name'];
         if ( isFunc(o) ) return '';
-        if ( isSymbol(o) ) return '';
+        if ( isSymbol(o) ) return o.toString();
 
 
         let keys = Object.keys(o);
@@ -36,7 +39,10 @@ export default class BaseAdapter implements LogAdapter {
         }
     
         keys.forEach( (key,i) => {
-            if ( typeof values[i] ==='object')
+            if ( isClass(values[i]) ) value='class '+values[i].name;
+            else if ( isFunc(values[i]) ) return '';
+            else if ( isSymbol(values[i]) ) value=values[i].toString();
+            else if ( typeof values[i] ==='object')
                 value = self.toStr(values[i],depth+1);
             else if ( typeof values[i] ==='string')
                 value = "'"+values[i]+"'";
@@ -80,7 +86,7 @@ export default class BaseAdapter implements LogAdapter {
     
         }
         catch (error) {
-            return {str:'Error',logs:[error]};
+            return {str:'Error',logs:[error.toString()]};
         }
     }
     /* istanbul ignore next */
