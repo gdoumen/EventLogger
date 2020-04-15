@@ -194,6 +194,21 @@ describe ( 'context' ,() => {
         expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'})
     })
 
+
+    test('LazaLoading child with implicit root , value set in root', ()=> {
+        EventLogger.setGlobalConfig('lazyLoading',true)
+
+        let child = new EventLogger('child','mother');
+        let mother = new EventLogger('mother');
+        let logger = new EventLogger('root');
+
+        logger.set({x:1});
+        mother.set({y:1}); // will be initialized at that point with logger as root
+        child.log('test'); // will be initialized at that point with mother as parent
+        
+        expect(mock.log).toHaveBeenCalledWith('child',{x:1,y:1,message:'test'})
+    })
+
 })
 
 describe ('set/setContext',()=> {

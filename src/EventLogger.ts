@@ -3,6 +3,7 @@ import LogAdapter,{FilterFunc,registerLogAdapter,getLogAdapters,resetAdapters} f
 
 const GlobalConfigDefault = {
     autoTimeStamp : true,
+    lazyLoading:false,
     root:undefined
 }
 
@@ -10,18 +11,35 @@ export interface IHash {
     [details: string] : EventLogger;
 } 
 
+interface EventLoggerConfig {
+    name: string, parent?:EventLogger|string
+}
 
 export default class EventLogger {
     private context: Context;
     private parent?: EventLogger;
+    private config:EventLoggerConfig;
+    private isReady:boolean;
 
     private static loggers:IHash = {}
     private static GlobalConfig:any =  JSON.parse(JSON.stringify(GlobalConfigDefault));
 
     constructor (name: string, parent?:EventLogger|string) {
 
+        this.isReady= false;
+        this.config  = {name,parent};
+
+        if ( !EventLogger.GlobalConfig.lazyLoading)
+            this.init();
+    }
+
+    init() {
+
+        let name = this.config.name;
+        let parent = this.config.parent;
+
         let parentObj;        
-        parentObj = ( parent!==undefined && typeof(parent)==='string') ? EventLogger.loggers[name] : parent;
+        parentObj = ( parent!==undefined && typeof(parent)==='string') ? EventLogger.loggers[parent] : parent;
         if ( parentObj===undefined) parentObj = EventLogger.GlobalConfig.root;
 
         if ( EventLogger.loggers[name]===undefined) {
@@ -40,6 +58,8 @@ export default class EventLogger {
         if ( EventLogger.GlobalConfig.root===undefined) {
             EventLogger.GlobalConfig.root = this;
         }
+
+        this.isReady = true;
     }
 
     getName() : string {
@@ -55,6 +75,8 @@ export default class EventLogger {
     }
 
     set(payload:any) {
+        if ( !this.isReady )
+            this.init();
         this.context.update(payload)
     }
 
@@ -81,6 +103,9 @@ export default class EventLogger {
 
     
     logEvent(event : any,level?:string )  {
+        if ( !this.isReady )
+            this.init();
+
         if (level!==undefined) {
             event.level = level;
         }
