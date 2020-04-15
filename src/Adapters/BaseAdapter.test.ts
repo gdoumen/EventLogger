@@ -87,6 +87,14 @@ describe('generateLog',()=>{
         expect(res.logs).toEqual(['z:class BaseAdapter']);
     });
 
+    test('method',()=> {
+        const fn = (a,b) => b;
+        const adapter = new BaseAdapter();
+        let res = adapter.generateLog('test',{fn});
+
+        expect(res.logs).toEqual([]);
+    });
+
 
     test('exceptional case: throws exception',()=> {
         adapter = new BaseAdapter();

@@ -1,34 +1,44 @@
 import Context from './Context'
 import LogAdapter,{FilterFunc,registerLogAdapter,getLogAdapters,resetAdapters} from './LogAdapter';
 
-var GlobalConfig : any =  {
-    autoTimeStamp : true
+const GlobalConfigDefault = {
+    autoTimeStamp : true,
+    root:undefined
 }
 
 export interface IHash {
     [details: string] : EventLogger;
 } 
 
-var loggers:IHash = {}
 
 export default class EventLogger {
     private context: Context;
-    private parent: EventLogger | undefined;
+    private parent?: EventLogger;
 
-    constructor (name: string, parent?:EventLogger) {
-        if ( parent!==undefined || loggers[name]===undefined) {
-            this.parent = parent;
+    private static loggers:IHash = {}
+    private static GlobalConfig:any =  JSON.parse(JSON.stringify(GlobalConfigDefault));
+
+    constructor (name: string, parent?:EventLogger|string) {
+
+        let parentObj;        
+        parentObj = ( parent!==undefined && typeof(parent)==='string') ? EventLogger.loggers[name] : parent;
+        if ( parentObj===undefined) parentObj = EventLogger.GlobalConfig.root;
+
+        if ( EventLogger.loggers[name]===undefined) {
             let parentCtx = undefined;
-    
-            if ( parent!==undefined) {
-                parentCtx = parent.context;
+            if ( parentObj!==undefined) {
+                parentCtx = parentObj.context;
             }
-            
-            this.context = new Context(name,undefined,parentCtx);            
-            loggers[name] = this;
+            this.context = new Context(name,undefined,parentCtx);  
+            EventLogger.loggers[name] = this;             
         }
-        else {
-            this.context = loggers[name].context;
+        else {  // existing Context
+            this.context = EventLogger.loggers[name].context;
+        }
+        this.parent = parentObj;
+
+        if ( EventLogger.GlobalConfig.root===undefined) {
+            EventLogger.GlobalConfig.root = this;
         }
     }
 
@@ -77,7 +87,7 @@ export default class EventLogger {
         let {name,data} = this.context.get(event);
         let adapters = getLogAdapters(name,data);
     
-        if ( GlobalConfig.autoTimeStamp)
+        if ( EventLogger.GlobalConfig.autoTimeStamp)
             data.ts =  (new Date()).toISOString();
         adapters.forEach( adapter => adapter.log(name,data))
     }
@@ -93,12 +103,12 @@ export default class EventLogger {
 
     static reset() {
         resetAdapters();
-        loggers = {}
-        this.setGlobalConfig('autoTimeStamp', true)
+        EventLogger.loggers = {}
+        EventLogger.GlobalConfig  =  JSON.parse(JSON.stringify(GlobalConfigDefault));
     }
 
     static setGlobalConfig(key:string, value: any) : void{
-        GlobalConfig[key] = value;
+        EventLogger.GlobalConfig[key] = value;
     }
     
 }

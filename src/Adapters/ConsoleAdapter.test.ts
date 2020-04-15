@@ -6,6 +6,10 @@ let originalLog = console.log;
 
 
 describe('ConsoleAdapter',()=>{
+    beforeAll(()=>{
+        EventLogger.reset();
+    })
+
 
     beforeEach(()=>{
         EventLogger.registerAdapter( new ConsoleAdapter);

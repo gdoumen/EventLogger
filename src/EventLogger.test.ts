@@ -3,21 +3,45 @@ import Context from './Context';
 import BaseAdapter from './Adapters/BaseAdapter';
 import LogAdapter from './LogAdapter';
 
+class MockAdapter extends BaseAdapter implements LogAdapter {
+    log(context: string, event:any):void   {
+        // empty
+    } 
+}
+
 describe ('Constructor',()=> {
     afterEach( ()=> {
         EventLogger.reset();
     })
 
-    test('string only', ()=> {
+    test('no parent - first logger', ()=> {
         let logger = new EventLogger('test');
         expect(logger.getName()).toBe('test');
         expect(logger.getParent()).toBeUndefined();
         expect(logger._get()).toEqual({})
     })
 
-    test('string with parent', ()=> {
+    test('with parent as EventLogger', ()=> {
         let parent = new EventLogger('parent');
         let logger = new EventLogger('test',parent);
+        expect(logger.getName()).toBe('test');
+        expect(logger.getParent()?.getName()).toBe('parent');
+        expect(logger._get()).toEqual({})
+    })
+
+    test('with parent as string', ()=> {
+        let parent = new EventLogger('parent');
+        let logger = new EventLogger('test','parent');
+        expect(logger.getName()).toBe('test');
+        expect(logger.getParent()?.getName()).toBe('parent');
+        expect(logger._get()).toEqual({})
+    })
+
+
+    test('2nd logger without parent => first will become implicit parent', ()=> {
+        let parent = new EventLogger('parent');
+        let logger = new EventLogger('test');
+
         expect(logger.getName()).toBe('test');
         expect(logger.getParent()?.getName()).toBe('parent');
         expect(logger._get()).toEqual({})
@@ -44,11 +68,6 @@ describe ('Constructor',()=> {
 
 describe ('log levels',()=> {
 
-    class MockAdapter extends BaseAdapter implements LogAdapter {
-        log(context: string, event:any):void   {
-            // empty
-        } 
-    }
     var mock = new MockAdapter ();
 
     beforeEach( ()=> {
@@ -114,6 +133,65 @@ describe ('log levels',()=> {
         logger.set({x:1});
         logger.logEvent({message:'test',level:'debug'},'error')        
         expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'})
+    })
+
+})
+
+
+describe ( 'context' ,() => {
+    var mock = new MockAdapter ();
+
+    beforeEach( ()=> {
+        mock.log = jest.fn();
+        EventLogger.registerAdapter(mock);
+        EventLogger.setGlobalConfig('autoTimeStamp',false);
+    })
+    afterEach( ()=> {
+        EventLogger.reset();
+    })
+
+    test('root context', ()=> {
+        let logger = new EventLogger('root');
+
+        logger.set({x:1});
+        logger.log('test')        
+        expect(mock.log).toHaveBeenCalledWith('root',{x:1,message:'test'})
+    })
+
+    test('root context, value set in root', ()=> {
+        let logger = new EventLogger('root');
+
+        logger.set({x:1});
+        logger.log('test')        
+        expect(mock.log).toHaveBeenCalledWith('root',{x:1,message:'test'})
+    })
+
+    test('child context, value set in root', ()=> {
+        let logger = new EventLogger('root');
+        let child = new EventLogger('child',logger);
+
+        logger.set({x:1});
+        child.log('test')        
+        expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'})
+    })
+
+    test('3rd level, value set in root', ()=> {
+        let logger = new EventLogger('root');
+        let mother = new EventLogger('mother',logger);
+        let child = new EventLogger('child',mother);
+
+        logger.set({x:1});
+        child.log('test')        
+        expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'})
+    })
+
+    test('child with implicit root , value set in root', ()=> {
+        let logger = new EventLogger('root');
+        let child = new EventLogger('child');
+
+        logger.set({x:1});
+        child.log('test')        
+        expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'})
     })
 
 })
