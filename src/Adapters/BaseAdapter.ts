@@ -67,7 +67,11 @@ export default class BaseAdapter implements LogAdapter {
                 if ( key==='ts') ts = event[key];
                 else if ( key==='message') message = event[key]
                 else {
-                    if ( typeof(event[key])==='object' )
+                    if ( isClass(event[key]) ) logs.push(key + ':class '+event[key].name);
+                    else if ( isFunc(event[key]) ) {
+                        // skip
+                    } 
+                    else if ( typeof(event[key])==='object' )
                         logs.push(key + ':' + self.toStr(event[key]))
                     else  if ( typeof (event[key]) ==='string')
                         logs.push(key + ':' + ("'"+event[key]+"'"))

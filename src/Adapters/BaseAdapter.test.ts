@@ -79,6 +79,15 @@ describe('generateLog',()=>{
 
     });
 
+    test('class',()=> {
+        const z = BaseAdapter;
+        const adapter = new BaseAdapter();
+        let res = adapter.generateLog('test',{z});
+
+        expect(res.logs).toEqual(['z:class BaseAdapter']);
+    });
+
+
     test('exceptional case: throws exception',()=> {
         adapter = new BaseAdapter();
         adapter.toStr = jest.fn((o:Object,depth:number=0):string=> { 
