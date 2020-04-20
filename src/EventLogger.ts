@@ -20,6 +20,8 @@ export default class EventLogger {
     private parent?: EventLogger;
     private config:EventLoggerConfig;
     private isReady:boolean;
+    private isBusy:boolean;
+    private events:Array<any>;
 
     private static loggers:IHash = {}
     private static GlobalConfig:any =  JSON.parse(JSON.stringify(GlobalConfigDefault));
@@ -28,6 +30,8 @@ export default class EventLogger {
 
         this.isReady= false;
         this.config  = {name,parent};
+        this.isBusy = false;
+        this.events = [];
 
         if ( !EventLogger.GlobalConfig.lazyLoading)
             this.init();
@@ -114,7 +118,24 @@ export default class EventLogger {
     
         if ( EventLogger.GlobalConfig.autoTimeStamp)
             data.ts =  (new Date()).toISOString();
-        adapters.forEach( adapter => adapter.log(name,data))
+        
+        this.events.push(data);
+        
+        if ( !this.isBusy) {
+            this.isBusy = true;
+
+            adapters.forEach( adapter => {
+                try {
+                    this.events.forEach( ev => {adapter.log(name,data) })                    
+                }
+                catch (error) {
+                    //ignore
+                }
+            })
+            this.isBusy = false;
+    
+        }
+        
     }
 
     // test only, don't use

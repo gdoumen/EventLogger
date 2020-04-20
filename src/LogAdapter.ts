@@ -19,8 +19,18 @@ function getLogAdapters(context:string,event?:any) : Array<LogAdapter> {
     let result:Array<LogAdapter> = [];
 
     adapters.forEach( (ad:LogAdapterDescription) => { 
-        if ( ad.filter==undefined || ad.filter(context,event)==true )
-            result.push(ad.adapter)            
+        if ( ad.filter==undefined)  {
+            result.push(ad.adapter)                            
+        }
+        else {
+            try {
+                if (ad.filter(context,event)==true )
+                    result.push(ad.adapter)                            
+            }
+            catch (error) {
+                //ignore
+            }
+        } 
     } )
     return result;
 }
