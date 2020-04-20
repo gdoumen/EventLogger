@@ -133,7 +133,7 @@ export default class EventLogger {
                 }
             })
             this.isBusy = false;
-    
+            this.events = [];
         }
         
     }
