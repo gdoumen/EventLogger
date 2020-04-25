@@ -126,7 +126,7 @@ export default class EventLogger {
 
             adapters.forEach( adapter => {
                 try {
-                    this.events.forEach( ev => {adapter.log(name,data) })                    
+                    this.events.forEach( ev => {adapter.log(name,ev) })                    
                 }
                 catch (error) {
                     //ignore

@@ -2,6 +2,7 @@ import EventLogger from './EventLogger'
 import Context from './Context';
 import BaseAdapter from './Adapters/BaseAdapter';
 import LogAdapter from './LogAdapter';
+import { resolve } from 'dns';
 
 class MockAdapter extends BaseAdapter implements LogAdapter {
     log(context: string, event:any):void   {
@@ -262,3 +263,29 @@ describe ('set/setContext',()=> {
 
 
 })
+
+
+describe ( 'slow Adapter ' ,() => {
+    var slow = new MockAdapter ();
+    
+    beforeEach( ()=> {
+        EventLogger.registerAdapter(slow);
+        EventLogger.setGlobalConfig('autoTimeStamp',false);
+    })
+
+    afterEach( ()=> {
+        EventLogger.reset();
+    })
+
+    test('check', ()=> {
+        let logger = new EventLogger('root');
+        logger['isBusy'] = true;
+
+        logger.log('test')        
+        logger.log('test1')        
+
+        expect(logger['isBusy']).toBe(true);
+        expect(logger['events'].length).toBe(2);
+    })
+
+});
