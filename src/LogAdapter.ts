@@ -1,6 +1,12 @@
+import Context from './Context'
+
+type RawEvent = {
+    context:Context,
+    event:any,
+}
 
 export default interface LogAdapter {
-    log(context: string, event:any):void    
+    log(contextName: string, event:any, raw?:RawEvent):void    
 }
 
 interface FilterFunc { (context:string,event?:any) : boolean }
@@ -44,6 +50,7 @@ export  {
     FilterFunc,
     registerLogAdapter,
     getLogAdapters,
-    resetAdapters
+    resetAdapters,
+    RawEvent
 
 }

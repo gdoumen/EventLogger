@@ -116,17 +116,19 @@ export default class EventLogger {
         let {name,data} = this.context.get(event);
         let adapters = getLogAdapters(name,data);
     
-        if ( EventLogger.GlobalConfig.autoTimeStamp)
+        if ( EventLogger.GlobalConfig.autoTimeStamp){
             data.ts =  (new Date()).toISOString();
+            event.ts = data.ts;
+        }
         
-        this.events.push(data);
+        this.events.push({data,event,context:this.context});
         
         if ( !this.isBusy) {
             this.isBusy = true;
 
             adapters.forEach( adapter => {
                 try {
-                    this.events.forEach( ev => {adapter.log(name,ev) })                    
+                    this.events.forEach( ev => {adapter.log(name,ev.data,ev) })                    
                 }
                 catch (error) {
                     //ignore

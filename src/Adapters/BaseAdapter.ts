@@ -1,4 +1,5 @@
-import LogAdapter  from "../LogAdapter";
+import LogAdapter, {RawEvent}  from "../LogAdapter";
+import { Context } from "..";
 
 const MAX_DEPTH = 3;
 
@@ -14,8 +15,17 @@ function isSymbol(o:any):boolean {
     return (typeof o === 'symbol');
 }
 
+export type Props = {
+    depth?: number
+}
+
 export default class BaseAdapter implements LogAdapter {
 
+    public props:Props;
+
+    constructor(props?:Props) {
+        this.props =  props===undefined ? {} : props;
+    }
 
     toStr(o:Object,depth:number=0):string {
         let str:string = '';
@@ -54,8 +64,18 @@ export default class BaseAdapter implements LogAdapter {
         return '{'+str+'}';
     }
 
-    generateLog(context: string, event: any) : {str:string,logs:Array<string>} {
+    generateLog(contextName: string, rawEvent: any, raw?:RawEvent) : {str:string,logs:Array<string>} {
+
+        let event = rawEvent;
+
         try {
+
+            if ( raw!==undefined && this.props.depth!==undefined) {
+                let {name,data} = raw.context.get(raw.event,this.props.depth);
+                event = data;
+            }
+
+
             let ts;
             let message;
             let str = '';
@@ -83,7 +103,7 @@ export default class BaseAdapter implements LogAdapter {
     
             if ( ts!==undefined) str += ts
             if ( str.length>0) str+='\t'
-            str+=context
+            str+=contextName
             str+=('\t'+message)
     
             return { str, logs }

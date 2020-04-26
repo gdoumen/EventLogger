@@ -23,16 +23,20 @@ export default class Context {
         return this.name;
     }
 
-    get(payload?:any) : {name:string,data:any} {
+    get(payload?:any,depth?:number) : {name:string,data:any} {
 
         if (payload===undefined) {
-            if ( this.parent===undefined)
+            if ( this.parent===undefined || (depth!==undefined && depth<2) )
                 return {name:this.name, data:this.data};        
-            let data = this.merge(this.parent.get().data,false);
+            let d = depth===undefined? undefined : depth-1;
+            let data = this.merge(this.parent.get(undefined,d).data,false);
             return {name:this.name, data}
         }
 
-        let data = this.merge(payload,true,true);
+        if ( depth!==undefined && depth<1) 
+            return {name:this.name, data:payload}
+        
+        let data = this.merge(payload,true,true,depth);
         return {name:this.name, data}
 
     }
@@ -62,13 +66,13 @@ export default class Context {
         return this.data;
     }
 
-    merge( payload: any, before:boolean=true, withParent=false) : any {
+    merge( payload: any, before:boolean=true, withParent:boolean=false, depth?:number) : any {
         let result : any;
         let key : string;
         let origin = this.data;
 
         if ( withParent) {
-            origin = this.get().data;
+            origin = this.get(undefined,depth).data;
         }
         result = {}
         if (before) {

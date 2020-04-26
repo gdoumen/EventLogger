@@ -85,7 +85,7 @@ describe ('log levels',()=> {
 
         logger.set({x:1});
         logger.log('test')        
-        expect(mock.log).toHaveBeenCalledWith('test',{x:1,message:'test'})
+        expect(mock.log).toHaveBeenCalledWith('test',{x:1,message:'test'},expect.anything())
     })
 
     test('debug', ()=> {
@@ -94,8 +94,8 @@ describe ('log levels',()=> {
         logger.set({x:1});
         logger.debug('test')        
         logger.logEvent({message:'test1'},'debug')        
-        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'debug'})
-        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'debug'})
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'debug'},expect.anything())
+        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'debug'},expect.anything())
     })
 
     test('info', ()=> {
@@ -104,8 +104,8 @@ describe ('log levels',()=> {
         logger.set({x:1});
         logger.info('test')        
         logger.logEvent({message:'test1'},'info')        
-        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'info'})
-        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'info'})
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'info'},expect.anything())
+        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'info'},expect.anything())
     })
 
     test('error', ()=> {
@@ -114,8 +114,8 @@ describe ('log levels',()=> {
         logger.set({x:1});
         logger.error('test')        
         logger.logEvent({message:'test1'},'error')        
-        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'})
-        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'error'})
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'},expect.anything())
+        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'error'},expect.anything())
     })
 
     test('level is set in context and conflicts with method => method wins', ()=> {
@@ -124,8 +124,8 @@ describe ('log levels',()=> {
         logger.set({x:1,level:'info'});
         logger.error('test')        
         logger.logEvent({message:'test1'},'error')        
-        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'})
-        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'error'})
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'},expect.anything())
+        expect(mock.log).toHaveBeenNthCalledWith(2,'test',{x:1,message:'test1',level:'error'},expect.anything())
     })
 
     test('level in event conflicts with method parameter => method wins', ()=> {
@@ -133,7 +133,7 @@ describe ('log levels',()=> {
 
         logger.set({x:1});
         logger.logEvent({message:'test',level:'debug'},'error')        
-        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'})
+        expect(mock.log).toHaveBeenNthCalledWith(1,'test',{x:1,message:'test',level:'error'},expect.anything())
     })
 
 })
@@ -156,7 +156,7 @@ describe ( 'context' ,() => {
 
         logger.set({x:1});
         logger.log('test')        
-        expect(mock.log).toHaveBeenCalledWith('root',{x:1,message:'test'})
+        expect(mock.log).toHaveBeenCalledWith('root',{x:1,message:'test'},expect.anything())
     })
 
     test('root context, value set in root', ()=> {
@@ -164,7 +164,7 @@ describe ( 'context' ,() => {
 
         logger.set({x:1});
         logger.log('test')        
-        expect(mock.log).toHaveBeenCalledWith('root',{x:1,message:'test'})
+        expect(mock.log).toHaveBeenCalledWith('root',{x:1,message:'test'},expect.anything())
     })
 
     test('child context, value set in root', ()=> {
@@ -173,7 +173,7 @@ describe ( 'context' ,() => {
 
         logger.set({x:1});
         child.log('test')        
-        expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'})
+        expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'},expect.anything())
     })
 
     test('3rd level, value set in root', ()=> {
@@ -183,7 +183,7 @@ describe ( 'context' ,() => {
 
         logger.set({x:1});
         child.log('test')        
-        expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'})
+        expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'},expect.anything())
     })
 
     test('child with implicit root , value set in root', ()=> {
@@ -192,7 +192,7 @@ describe ( 'context' ,() => {
 
         logger.set({x:1});
         child.log('test')        
-        expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'})
+        expect(mock.log).toHaveBeenCalledWith('child',{x:1,message:'test'},expect.anything())
     })
 
 
@@ -207,7 +207,7 @@ describe ( 'context' ,() => {
         mother.set({y:1}); // will be initialized at that point with logger as root
         child.log('test'); // will be initialized at that point with mother as parent
         
-        expect(mock.log).toHaveBeenCalledWith('child',{x:1,y:1,message:'test'})
+        expect(mock.log).toHaveBeenCalledWith('child',{x:1,y:1,message:'test'},expect.anything())
     })
 
 })
@@ -260,6 +260,7 @@ describe ('set/setContext',()=> {
         logger.set({y:2});
         expect(logger._get()).toEqual({y:2})
     })
+
 
 
 })

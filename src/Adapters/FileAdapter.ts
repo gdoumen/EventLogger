@@ -1,8 +1,8 @@
-import LogAdapter  from "../LogAdapter";
-import BaseAdapter  from "./BaseAdapter";
+import LogAdapter, { RawEvent }  from "../LogAdapter";
+import BaseAdapter,{Props}  from "./BaseAdapter";
 var fs = require('fs');
 
-interface FileOpts {
+interface FileOpts  extends Props {
     name? : string
     fs?: any
 }
@@ -18,17 +18,25 @@ export default class FileAdapter extends BaseAdapter implements LogAdapter  {
     }
 
     constructor( opts?:FileOpts ){
-        super();
+        super(opts);
         if (opts!==undefined) {
             if ( opts.name!==undefined) this.opts.name = opts.name
             if ( opts.fs!==undefined) this.opts.fs = opts.fs
         }
     }
 
-    log(context: string, event: any): void {
+    log(context: string, event: any, raw?: RawEvent): void {
         event.context = context;
 
-        this.opts.fs.appendFile(this.opts.name, this.toStr(event,-1)+'\n','utf8', nop)
+        let logEvent = event;
+
+        if ( raw!==undefined && this.props.depth!==undefined) {
+            let {name,data} = raw.context.get(raw.event,this.props.depth);
+            logEvent = data;
+            logEvent.context = name;
+        }
+        this.opts.fs.appendFile(this.opts.name, this.toStr(logEvent,-1)+'\n','utf8', nop)
     }
 
 }
+

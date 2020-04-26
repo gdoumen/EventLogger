@@ -110,3 +110,47 @@ describe('logging',()=>{
 
 }) 
 
+
+
+describe('ConsoleAdapter with Context filtering',()=>{
+    beforeAll(()=>{
+        EventLogger.reset();
+    })
+
+
+    beforeEach(()=>{
+        EventLogger.registerAdapter( new FileAdapter({depth:1}));
+        fs.appendFile = jest.fn();
+    })
+
+    afterEach(()=>{
+        EventLogger.reset();
+    })
+
+
+    test('simple log',()=> {
+
+        let parent = new EventLogger("app");
+        let LOG = new EventLogger("page");
+        parent.set({a:1,b:2})
+        LOG.log('test')
+
+        let calls = mocked(fs.appendFile).mock.calls;
+        expect(calls[0][1]).toMatch(/{message:'test',ts:.+,context:'page'}\n/)
+    });
+
+    test('simple log with values stored in context',()=> {
+        EventLogger.setGlobalConfig('autoTimeStamp',false);
+        let parent = new EventLogger("app");
+        let LOG = new EventLogger("page");
+        parent.set({a:1,b:2})
+        LOG.set({x:1})
+        LOG.log('test')
+    
+        let calls = mocked(fs.appendFile).mock.calls;
+        expect(calls[0][1]).toMatch(/{x:1,message:'test',context:'page'}\n/)
+    });
+
+});
+
+

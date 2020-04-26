@@ -62,3 +62,42 @@ describe('ConsoleAdapter',()=>{
     });
 }) 
 
+describe('ConsoleAdapter with Context filtering',()=>{
+    beforeAll(()=>{
+        EventLogger.reset();
+    })
+
+
+    beforeEach(()=>{
+        EventLogger.registerAdapter( new ConsoleAdapter({depth:1}));
+        console.log = jest.fn();
+    })
+
+    afterEach(()=>{
+        EventLogger.reset();
+    })
+
+
+    test('simple log',()=> {
+        let parent = new EventLogger("app");
+        let LOG = new EventLogger("page");
+        parent.set({a:1,b:2})
+        LOG.log('test')
+    
+        expect(mocked(console.log).mock.calls[0][0]).toMatch(/.+\tpage\ttest/);
+        expect(mocked(console.log).mock.calls[0][1]).toBeUndefined
+    });
+
+    test('simple log with values stored in context',()=> {
+        let parent = new EventLogger("app");
+        let LOG = new EventLogger("page");
+        parent.set({a:1,b:2})
+        LOG.set({x:1})
+        LOG.log('test')
+    
+        expect(mocked(console.log).mock.calls[0][0]).toMatch(/.+\tpage\ttest/);
+        expect(mocked(console.log).mock.calls[0][1]).toBe("x:1");
+        expect(mocked(console.log).mock.calls[0][2]).toBeUndefined
+    });
+
+});

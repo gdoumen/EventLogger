@@ -63,11 +63,32 @@ describe( 'get', ()=> {
         expect(res.data).toEqual({a:1,b:2,c:3,z:'test'});
     })
 
-    test ( 'context chaned parents: with oayload',()=> {
+    test ( 'context chained parents: with oayload',()=> {
         let ctx = new Context( 'XX',{z:'test'}, new Context('myCtx',{b:2,c:3}, new Context('parent',{a:1})));
         let res = ctx.get({a:'got it'});
         expect(res.name).toEqual('XX');
         expect(res.data).toEqual({a:'got it',b:2,c:3,z:'test'});
+    })
+
+    test ( 'context chained parents: with oayload - depth = 1',()=> {
+        let ctx = new Context( 'XX',{z:'test'}, new Context('myCtx',{b:2}, new Context('parent',{c:3})));
+        let res = ctx.get({a:'got it'},1);
+        expect(res.name).toEqual('XX');
+        expect(res.data).toEqual({a:'got it',z:'test'});
+    })
+
+    test ( 'context chained parents: with oayload - depth = 0',()=> {
+        let ctx = new Context( 'XX',{z:'test'}, new Context('myCtx',{b:2}, new Context('parent',{c:3})));
+        let res = ctx.get({a:'got it'},0);
+        expect(res.name).toEqual('XX');
+        expect(res.data).toEqual({a:'got it'});
+    })
+
+    test ( 'context chained parents: with oayload - depth = 2',()=> {
+        let ctx = new Context( 'XX',{z:'test'}, new Context('myCtx',{b:2}, new Context('parent',{c:3})));
+        let res = ctx.get({a:'got it'},2);
+        expect(res.name).toEqual('XX');
+        expect(res.data).toEqual({a:'got it',z:'test',b:2});
     })
 
 })
