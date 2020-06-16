@@ -15,7 +15,7 @@ function isSymbol(o:any):boolean {
     return (typeof o === 'symbol');
 }
 
-export type Props = {
+export interface Props  {
     depth?: number
 }
 
@@ -64,7 +64,7 @@ export default class BaseAdapter implements LogAdapter {
         return '{'+str+'}';
     }
 
-    generateLog(contextName: string, rawEvent: any, raw?:RawEvent) : {str:string,logs:Array<string>} {
+    generateLog(contextName: string, rawEvent: any, raw?:RawEvent) : {str:string,logs:string[]} {
 
         let event = rawEvent;
 
@@ -79,7 +79,7 @@ export default class BaseAdapter implements LogAdapter {
             let ts;
             let message;
             let str = '';
-            let logs : Array<any> = [];
+            let logs : string[] = [];
             let self = this;
     
             let key;

@@ -1,6 +1,6 @@
 import LogAdapter, { RawEvent }  from "../LogAdapter";
 import BaseAdapter,{Props}  from "./BaseAdapter";
-var fs = require('fs');
+import * as fs from 'fs';
 
 interface FileOpts  extends Props {
     name? : string
