@@ -1,6 +1,6 @@
 {
 	"name": "gd-eventlog",
-	"version": "0.1.15",
+	"version": "0.1.15.1",
 	"description": "A node module for event logging",
 	"scripts": {
 		"build": "tsc",
