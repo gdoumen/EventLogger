@@ -2,7 +2,6 @@ import EventLogger from './EventLogger'
 import Context from './Context';
 import BaseAdapter from './Adapters/BaseAdapter';
 import LogAdapter from './LogAdapter';
-import { resolve } from 'dns';
 
 class MockAdapter extends BaseAdapter implements LogAdapter {
     log(context: string, event:any):void   {
@@ -261,6 +260,50 @@ describe ('set/setContext',()=> {
         expect(logger._get()).toEqual({y:2})
     })
 
+
+
+})
+
+describe ('setGlobal',()=> {
+
+    afterEach( ()=> {
+        EventLogger.reset();
+    })
+
+
+    test('global Logger should not have a parent', ()=> {
+        const globalParent = EventLogger._getGlobalLogger().getParent();
+        expect(globalParent).toBeUndefined();
+    })
+
+    test('two loggers - no conflicts', ()=> {
+        let logger1 = new EventLogger('test1');
+        let logger2 = new EventLogger('test2'); // test1 is implicit parent
+
+        logger1.set({x:1});
+        logger2.set({z:1});
+
+        expect(logger1._get()).toEqual({x:1})
+        expect(logger2._get()).toEqual({x:1,z:1})
+        logger1.setGlobal({y:2});
+        expect(logger1._get()).toEqual({x:1,y:2})
+        expect(logger2._get()).toEqual({x:1,y:2,z:1})
+    })
+
+    test('two loggers - same log key used in Global and child element ', ()=> {
+        // child has precedence
+        let logger1 = new EventLogger('test1');
+        let logger2 = new EventLogger('test2'); // test1 is implicit parent
+
+        logger1.set({x:1});
+        logger2.set({z:1});
+
+        expect(logger1._get()).toEqual({x:1})
+        expect(logger2._get()).toEqual({x:1,z:1})
+        logger1.setGlobal({z:2});
+        expect(logger1._get()).toEqual({x:1,z:2})
+        expect(logger2._get()).toEqual({x:1,z:1})
+    })
 
 
 })

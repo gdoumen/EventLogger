@@ -15,6 +15,9 @@ interface EventLoggerConfig {
     name: string, parent?:EventLogger|string
 }
 
+const GLOBAL_CONTEXT_NAME='__global'
+let globalLogger : EventLogger = undefined; 
+
 export default class EventLogger {
     private context: Context;
     private parent?: EventLogger;
@@ -28,8 +31,9 @@ export default class EventLogger {
 
     constructor (name: string, parent?:EventLogger|string) {
 
+        const parentLogger:EventLogger|string = parent;
         this.isReady= false;
-        this.config  = {name,parent};
+        this.config  = {name,parent:parentLogger};
         this.isBusy = false;
         this.events = [];
 
@@ -45,6 +49,7 @@ export default class EventLogger {
         let parentObj;        
         parentObj = ( parent!==undefined && typeof(parent)==='string') ? EventLogger.loggers[parent] : parent;
         if ( parentObj===undefined) parentObj = EventLogger.GlobalConfig.root;
+        if ( parentObj===undefined && name!==GLOBAL_CONTEXT_NAME) parentObj = globalLogger;
 
         if ( EventLogger.loggers[name]===undefined) {
             let parentCtx = undefined;
@@ -59,7 +64,7 @@ export default class EventLogger {
         }
         this.parent = parentObj;
 
-        if ( EventLogger.GlobalConfig.root===undefined) {
+        if ( EventLogger.GlobalConfig.root===undefined && name!==GLOBAL_CONTEXT_NAME) {
             EventLogger.GlobalConfig.root = this;
         }
 
@@ -71,6 +76,8 @@ export default class EventLogger {
     }
 
     getParent() : EventLogger|undefined {
+        if ( this.parent===undefined) return undefined;
+        if ( this.parent.getName()===GLOBAL_CONTEXT_NAME) return undefined;
         return this.parent;
     }
 
@@ -83,6 +90,11 @@ export default class EventLogger {
             this.init();
         this.context.update(payload)
     }
+
+    setGlobal(payload:any) {
+        globalLogger.set(payload);
+    }
+
 
     createEvent(str : string, ...args: any[] ) :{message:string} {
         let message = str;
@@ -140,9 +152,17 @@ export default class EventLogger {
         
     }
 
+    static setGlobalConfig(key:string, value: any) : void{
+        EventLogger.GlobalConfig[key] = value;
+    }
+
     // test only, don't use
     _get() {
         return this.context.get().data;
+    }
+
+    static _getGlobalLogger() {
+        return globalLogger;
     }
 
     static registerAdapter(  adapter: LogAdapter, filter?:FilterFunc ) {
@@ -153,10 +173,10 @@ export default class EventLogger {
         resetAdapters();
         EventLogger.loggers = {}
         EventLogger.GlobalConfig  =  JSON.parse(JSON.stringify(GlobalConfigDefault));
+        globalLogger = new EventLogger(GLOBAL_CONTEXT_NAME);
     }
 
-    static setGlobalConfig(key:string, value: any) : void{
-        EventLogger.GlobalConfig[key] = value;
-    }
     
 }
+
+globalLogger = new EventLogger(GLOBAL_CONTEXT_NAME);
