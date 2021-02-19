@@ -1,4 +1,4 @@
-import EventLogger from './EventLogger'
+import EventLogger,{EventLoggerInterface} from './EventLogger'
 import Context from './Context'
 import LogAdapter from './LogAdapter'
 import BaseAdapter from './Adapters/BaseAdapter'
@@ -7,7 +7,7 @@ import FileAdapter from './Adapters/FileAdapter'
 
 
 export  {
-    EventLogger,
+    EventLogger,EventLoggerInterface,
     Context,
     LogAdapter,
     BaseAdapter,
