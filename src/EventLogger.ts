@@ -18,7 +18,12 @@ interface EventLoggerConfig {
 const GLOBAL_CONTEXT_NAME='__global'
 let globalLogger : EventLogger = undefined; 
 
-export default class EventLogger {
+export interface EventLoggerInterface {
+    log(str : string, ...args: any[] ): void ;
+    logEvent(event : any,level?:string ): void;
+}
+
+export default class EventLogger implements EventLoggerInterface{
     private context: Context;
     private parent?: EventLogger;
     private config:EventLoggerConfig;
@@ -91,7 +96,7 @@ export default class EventLogger {
         this.context.update(payload)
     }
 
-    setGlobal(payload:any) {
+    setGlobal(payload:any): void {
         globalLogger.set(payload);
     }
 
@@ -103,7 +108,7 @@ export default class EventLogger {
         return {message};
     }
     
-    log(str : string, ...args: any[] )  {
+    log(str : string, ...args: any[] ): void  {
         this.logEvent( this.createEvent(str,...args));
     }
 
@@ -118,7 +123,7 @@ export default class EventLogger {
     }
 
     
-    logEvent(event : any,level?:string )  {
+    logEvent(event : any,level?:string ): void  {
         if ( !this.isReady )
             this.init();
 
