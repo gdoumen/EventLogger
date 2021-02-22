@@ -1,5 +1,8 @@
 import Context from './Context'
 import LogAdapter,{FilterFunc,registerLogAdapter,getLogAdapters,resetAdapters} from './LogAdapter';
+import {isClass,isFunc,isSymbol} from './utils'
+
+const MAX_DEPTH=7;
 
 const GlobalConfigDefault = {
     autoTimeStamp : true,
@@ -33,6 +36,7 @@ export default class EventLogger implements EventLoggerInterface{
 
     private static loggers:IHash = {}
     private static GlobalConfig:any =  JSON.parse(JSON.stringify(GlobalConfigDefault));
+    private static KeyBlackList: Array<string> = [];
 
     constructor (name: string, parent?:EventLogger|string) {
 
@@ -145,7 +149,10 @@ export default class EventLogger implements EventLoggerInterface{
 
             adapters.forEach( adapter => {
                 try {
-                    this.events.forEach( ev => {adapter.log(name,ev.data,ev) })                    
+                    this.events.forEach( ev => {
+                        ev = this.filterBlackList(ev);
+                        adapter.log(name,ev.data,ev) 
+                    })                    
                 }
                 catch (error) {
                     //ignore
@@ -155,6 +162,55 @@ export default class EventLogger implements EventLoggerInterface{
             this.events = [];
         }
         
+    }
+
+    filterBlackList(o:Object,depth:number=0):Object {
+
+        let str:string = '';
+
+        if ( o===null || o===undefined) return o;
+        if ( depth>=MAX_DEPTH) return {};
+        if ( isClass(o) ) return o;
+        if ( isFunc(o) ) return o;
+        if ( isSymbol(o) ) return o;
+
+
+        let keys = Object.keys(o);
+        let values = Object.values(o);
+
+        /*
+        if (Array.isArray(o) && o.length === keys.length) {
+            value = o.map( v=> typeof(v)==='object' ? self.toStr(v,depth+1) : typeof(v)!=='string' ? v : "'"+v+"'" ).join(',');
+            str = '['+value+']'
+            return str;
+        }
+        */
+    
+        keys.forEach( (key,i) => {
+
+            const isBlackList = (EventLogger.KeyBlackList.find( val => val===key)!==undefined)
+
+            if ( typeof values[i] ==='object') {
+                if ( isBlackList)
+                    o[key]= '**filtered**'
+                else
+                    o[key] = this.filterBlackList(values[i],depth+1);
+            }
+            else if ( typeof values[i] ==='string')
+                if ( isBlackList)
+                    o[key]= '**filtered**'
+        })
+
+        return o;
+    }
+
+    static setKeyBlackList( list: Array<string>):void {
+        this.KeyBlackList = list;
+    } 
+    static addToBlackList(str:string) {
+        if ( this.KeyBlackList.find( val => val===str))
+            return; 
+        this.KeyBlackList.push(str);
     }
 
     static setGlobalConfig(key:string, value: any) : void{
@@ -178,6 +234,7 @@ export default class EventLogger implements EventLoggerInterface{
         resetAdapters();
         EventLogger.loggers = {}
         EventLogger.GlobalConfig  =  JSON.parse(JSON.stringify(GlobalConfigDefault));
+        EventLogger.KeyBlackList = [];
         globalLogger = new EventLogger(GLOBAL_CONTEXT_NAME);
     }
 

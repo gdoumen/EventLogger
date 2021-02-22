@@ -1,19 +1,7 @@
 import LogAdapter, {RawEvent}  from "../LogAdapter";
 import { Context } from "..";
+import {MAX_DEPTH,isClass,isFunc,isSymbol} from '../utils'
 
-const MAX_DEPTH = 3;
-
-function isFunc(o:any):boolean {
-    return (typeof o === 'function')
-}
-
-function isClass(o:any):boolean {
-    return (isFunc(o) && o.prototype!==undefined && o.prototype.constructor!==undefined)
-}
-
-function isSymbol(o:any):boolean {
-    return (typeof o === 'symbol');
-}
 
 export interface Props  {
     depth?: number

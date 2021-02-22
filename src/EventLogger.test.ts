@@ -333,3 +333,91 @@ describe ( 'slow Adapter ' ,() => {
     })
 
 });
+
+
+describe ( 'key blacklist' ,() => {
+    var mock = new MockAdapter ();
+
+    beforeEach( ()=> {
+        mock.log = jest.fn();
+        EventLogger.registerAdapter(mock);
+        EventLogger.setGlobalConfig('autoTimeStamp',false);
+    })
+
+    afterEach( ()=> {
+        EventLogger.reset();
+    })
+
+    test('Blacklist can be initialized', ()=> {
+        const list = ['user','auth'];
+        EventLogger.setKeyBlackList(list);
+
+        expect( EventLogger['KeyBlackList']).toEqual(list);
+    })
+
+    test('element can be added to blacklist', ()=> {
+        const list = ['user','auth'];
+        EventLogger.setKeyBlackList(list);
+        EventLogger.addToBlackList( 'test');
+
+        expect( EventLogger['KeyBlackList']).toEqual(['user','auth','test']);
+    })
+
+    test('existing key will not be added to blacklist', ()=> {
+        const list = ['user','auth'];
+        EventLogger.setKeyBlackList(list);
+        EventLogger.addToBlackList( 'auth');
+
+        expect( EventLogger['KeyBlackList']).toEqual(['user','auth']);
+    })
+
+    test('Blacklist key in top element is filtered out', ()=> {
+        let logger = new EventLogger('test');
+        const list = ['user','auth'];
+        EventLogger.setKeyBlackList(list);
+
+        logger.logEvent( {message:'test', user:{ id:1, name:'test'}})        
+        expect(mock.log).toHaveBeenCalledWith('test',{message:'test',user:'**filtered**' },expect.anything())
+    })
+
+    test('Blacklist key in string in top element is filtered out', ()=> {
+        let logger = new EventLogger('test');
+        const list = ['user','auth','cacheDir'];
+        EventLogger.setKeyBlackList(list);
+
+        logger.logEvent( {message:'test', cacheDir:'/home/userA/temp'})        
+        expect(mock.log).toHaveBeenCalledWith('test',{message:'test',cacheDir: '**filtered**' },expect.anything())
+    })
+
+    test('Blacklist key in child element is filtered out', ()=> {
+        let logger = new EventLogger('test');
+        const list = ['user','auth'];
+        EventLogger.setKeyBlackList(list);
+
+        logger.logEvent( {message:'test', google:{  key:'1234', auth:{ accessToken:'lllll', id:'12345'} }})        
+        expect(mock.log).toHaveBeenCalledWith('test',{message:'test',google:{ key:'1234',auth:'**filtered**' } },expect.anything())
+    })
+
+    test('Blacklist key in string in child element is filtered out', ()=> {
+        let logger = new EventLogger('test');
+        const list = ['user','auth','cacheDir'];
+        EventLogger.setKeyBlackList(list);
+
+        logger.logEvent( {message:'test', settings:{cacheDir:'/home/userA/temp'}})        
+        expect(mock.log).toHaveBeenCalledWith('test',{message:'test',settings:{cacheDir: '**filtered**'} },expect.anything())
+    })
+
+    test('Blacklist key in string in array child element is filtered out', ()=> {
+        let logger = new EventLogger('test');
+        const list = ['user','auth','cacheDir'];
+        EventLogger.setKeyBlackList(list);
+
+        logger.logEvent( {message:'test', settings:[{cacheDir:'/home/userA/temp'}]})        
+        expect(mock.log).toHaveBeenCalledWith('test',{message:'test',settings:[{cacheDir: '**filtered**'}] },expect.anything())
+    })
+
+
+
+
+});
+
