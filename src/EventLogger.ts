@@ -37,6 +37,7 @@ export default class EventLogger implements EventLoggerInterface{
     private static loggers:IHash = {}
     private static GlobalConfig:any =  JSON.parse(JSON.stringify(GlobalConfigDefault));
     private static KeyBlackList: Array<string> = [];
+    private static externalLogger?: EventLoggerInterface = undefined;
 
     constructor (name: string, parent?:EventLogger|string) {
 
@@ -113,6 +114,10 @@ export default class EventLogger implements EventLoggerInterface{
     }
     
     log(str : string, ...args: any[] ): void  {
+        if ( EventLogger.externalLogger) {
+            EventLogger.externalLogger.log(str,...args);
+            return;
+        }
         this.logEvent( this.createEvent(str,...args));
     }
 
@@ -128,6 +133,10 @@ export default class EventLogger implements EventLoggerInterface{
 
     
     logEvent(event : any,level?:string ): void  {
+        if ( EventLogger.externalLogger) {
+            EventLogger.externalLogger.logEvent(event,level);
+            return;
+        }
         if ( !this.isReady )
             this.init();
 
@@ -150,11 +159,12 @@ export default class EventLogger implements EventLoggerInterface{
             adapters.forEach( adapter => {
                 try {
                     this.events.forEach( ev => {
-                        ev = this.filterBlackList(ev);
+                        ev.data = this.filterBlackList(ev.data);
+                        ev.event = this.filterBlackList(ev.event);
                         adapter.log(name,ev.data,ev) 
                     })                    
                 }
-                catch (error) {
+                catch (err) {
                     //ignore
                 }
             })
@@ -164,44 +174,53 @@ export default class EventLogger implements EventLoggerInterface{
         
     }
 
-    filterBlackList(o:Object,depth:number=0):Object {
+    filterBlackList(o:any,depth:number=0):Object {
 
         let str:string = '';
+        let res = {}
 
         if ( o===null || o===undefined) return o;
         if ( depth>=MAX_DEPTH) return {};
         if ( isClass(o) ) return o;
-        if ( isFunc(o) ) return o;
-        if ( isSymbol(o) ) return o;
+        if ( isFunc(o) ) return;
+        if ( isSymbol(o) ) return;
 
+        if ( typeof(o)==='object' && !Array.isArray(o)) {
+            let keys = Object.keys(o);
+            let values = Object.values(o);
+            keys.forEach( (key,i) => {
 
-        let keys = Object.keys(o);
-        let values = Object.values(o);
-
-        /*
-        if (Array.isArray(o) && o.length === keys.length) {
-            value = o.map( v=> typeof(v)==='object' ? self.toStr(v,depth+1) : typeof(v)!=='string' ? v : "'"+v+"'" ).join(',');
-            str = '['+value+']'
-            return str;
-        }
-        */
+                const isBlackList = (EventLogger.KeyBlackList.find( val => val===key)!==undefined)
     
-        keys.forEach( (key,i) => {
+    
+                if ( values[i] === null )
+                    res[key]= null;
+                else if ( values[i] === undefined )
+                    res[key]= undefined;
+                else if ( typeof values[i] ==='object') 
+                    res[key]= isBlackList ? '**filtered**' : this.filterBlackList(values[i],depth+1);
+                else if ( isClass(values[i]) ) res[key]=values[i];
+                else if ( isFunc(values[i]) ) return;
+                else if ( isSymbol(values[i]) ) return;
+                else {
+                    res[key]= isBlackList ? '**filtered**' : o[key];
+                }
+            });
+        
+        }
 
-            const isBlackList = (EventLogger.KeyBlackList.find( val => val===key)!==undefined)
-
-            if ( typeof values[i] ==='object') {
-                if ( isBlackList)
-                    o[key]= '**filtered**'
-                else
-                    o[key] = this.filterBlackList(values[i],depth+1);
-            }
-            else if ( typeof values[i] ==='string')
-                if ( isBlackList)
-                    o[key]= '**filtered**'
-        })
-
-        return o;
+        
+        else if (Array.isArray(o)  ) {
+            const arr = o as Array<any>
+            let arrRes = [];
+            arr.forEach( v=> { arrRes.push(this.filterBlackList(v,depth+1)) });
+            return arrRes;
+        }
+        else //if ( typeof(o)==='number' || typeof(o)==='string' || typeof(o)==='boolean')  
+            return o;
+        
+    
+        return res;
     }
 
     static setKeyBlackList( list: Array<string>):void {
@@ -235,10 +254,15 @@ export default class EventLogger implements EventLoggerInterface{
         EventLogger.loggers = {}
         EventLogger.GlobalConfig  =  JSON.parse(JSON.stringify(GlobalConfigDefault));
         EventLogger.KeyBlackList = [];
+        EventLogger.externalLogger = undefined
         globalLogger = new EventLogger(GLOBAL_CONTEXT_NAME);
+
     }
 
-    
+
+    static useExternalLogger( logger: EventLoggerInterface) {
+        EventLogger.externalLogger = logger;
+    }
 }
 
 globalLogger = new EventLogger(GLOBAL_CONTEXT_NAME);

@@ -1,3 +1,6 @@
+import { isFunc } from "./utils"
+
+
 export default class Context {
 
     private data : any
@@ -26,7 +29,7 @@ export default class Context {
     get(payload?:any,depth?:number) : {name:string,data:any} {
 
         if (payload===undefined) {
-            if ( this.parent===undefined || (depth!==undefined && depth<2) )
+            if ( this.parent===undefined || !isFunc(this.parent.get) || (depth!==undefined && depth<2) )
                 return {name:this.name, data:this.data};        
             let d = depth===undefined? undefined : depth-1;
             let data = this.merge(this.parent.get(undefined,d).data,false);

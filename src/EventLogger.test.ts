@@ -2,6 +2,7 @@ import EventLogger from './EventLogger'
 import Context from './Context';
 import BaseAdapter from './Adapters/BaseAdapter';
 import LogAdapter from './LogAdapter';
+import { isFunc } from './utils'
 
 class MockAdapter extends BaseAdapter implements LogAdapter {
     log(context: string, event:any):void   {
@@ -417,7 +418,273 @@ describe ( 'key blacklist' ,() => {
     })
 
 
+    test ( 'bug parent.get is not a function' ,() => {
+        let BaseLogger = new EventLogger('incyclist');
+        EventLogger.setGlobalConfig('uuid','1234')
+        EventLogger.setGlobalConfig('session','4567')
+        let scanLogger = new EventLogger('Daum8i Scanner');
+
+        const list = ['user','auth','cacheDir'];
+        EventLogger.setKeyBlackList(list);
+        
+        scanLogger.logEvent( {message: 'some message', c:{logger:scanLogger}} )
+        expect(mock.log).toHaveBeenCalled()
+
+        scanLogger.log(`2nd message` )
+        expect(mock.log).toHaveBeenNthCalledWith(2,'Daum8i Scanner',{message:'2nd message'},expect.anything())
+        expect( isFunc(scanLogger['context'].get) ).toBe(true);
+        expect( isFunc(scanLogger['context'].getParent().get) ).toBe(true);
+
+        scanLogger.log(`3rd message` )
+        expect(mock.log).toHaveBeenNthCalledWith(3,'Daum8i Scanner',{message:'3rd message'},expect.anything())
+        expect( isFunc(scanLogger['context'].get) ).toBe(true);
+        expect( isFunc(scanLogger['context'].getParent().get) ).toBe(true);
+    });
+
 
 
 });
 
+describe('filterBlackList',()=> {
+
+    describe ('non object - top element',()=> {
+        test('string', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( '123' )
+            expect (o).toEqual( '123')    
+        })
+
+        test('number', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( 1 )
+            expect (o).toEqual( 1)    
+        })
+
+        test('boolean', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( true )
+            expect (o).toEqual( true)    
+        })
+
+        test('array', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( [1,2] )
+            expect (o).toEqual([1,2])    
+        })
+
+        test('function', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const fnA = ()=> {}
+            const o = logger.filterBlackList( fnA )
+            expect (o).toBeUndefined();
+        })
+
+        test('symbol', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const sA = Symbol('a');
+
+            const o = logger.filterBlackList( sA)
+            expect (o).toBeUndefined();
+        })
+
+        test('Class', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+
+            const o = logger.filterBlackList( EventLogger)
+            expect (o).toBe(EventLogger);
+        })
+
+        test('undefined or null', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( undefined )
+            expect (o).toBeUndefined();    
+            const o1 = logger.filterBlackList( null )
+            expect (o1).toEqual( null)    
+        })
+
+    })
+
+    describe ('object - top element',()=> {
+
+        test('string', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( {a:'123', b:'2'} )
+            expect (o).toEqual( {a:'**filtered**',b:'2'})    
+        })
+
+        test('number', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( {a:1, b:2} )
+            expect (o).toEqual( {a:'**filtered**',b:2})    
+        })
+
+        test('boolean', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( {a:true, b:false} )
+            expect (o).toEqual( {a:'**filtered**',b:false})    
+        })
+
+        test('array', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( {a:[1,2], b:[1,2]} )
+            expect (o).toEqual( {a:'**filtered**',b:[1,2]})    
+        })
+
+        test('object', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( {a:{ a1:1, a2:2}, b:{b1:1, b2:2}} )
+            expect (o).toEqual( {a:'**filtered**',b:{b1:1, b2:2}})    
+        })
+
+        test('function', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const fnA = ()=> {}
+            const fnB = ()=> {}
+            const o = logger.filterBlackList( {a:fnA, b:fnB} )
+            expect (o).toEqual( {})    
+        })
+
+        test('symbol', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const sA = Symbol('a');
+            const sB = Symbol('b');
+
+            const o = logger.filterBlackList( {a:sA, b:sB} )
+            expect (o).toEqual( {})    
+        })
+
+        test('undefined or null', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const o = logger.filterBlackList( {a:undefined, b:undefined} )
+            expect (o).toEqual( {a:undefined,b:undefined})    
+            const o1 = logger.filterBlackList( {a:null, b:null} )
+            expect (o1).toEqual( {a:null,b:null})    
+        })
+
+        test('Class', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+
+            const o = logger.filterBlackList( {a:EventLogger,b:EventLogger})
+            expect (o).toEqual({a:EventLogger,b:EventLogger});
+        })
+
+
+        test('does not modify event object', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['a']) 
+            const event = {a:{ a1:1, a2:2}, b:{b1:1, b2:2}}
+            const o = logger.filterBlackList( event )
+            expect (o).toEqual( {a:'**filtered**',b:{b1:1, b2:2}})    
+            expect (event).toEqual( {a:{ a1:1, a2:2}, b:{b1:1, b2:2}} )    
+
+        })
+
+        test('does not return any object below 5th level', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['b']) 
+            const event = {a:{ a1: {a2:{ a3:{ a4: { a5:{ a6:{ a7:{ a8:{ test:true}}}}}}}} }}
+            const o = logger.filterBlackList( event )
+            expect (o).toEqual( {a:{ a1: {a2:{ a3:{ a4: { a5:{ a6:{ }}}}}} }} )    
+
+        })
+
+    })
+    
+})
+
+
+describe('external Logger',()=> {
+
+
+
+    describe ('using external logger',()=> {
+
+        const MockLogger = {
+            log: jest.fn(),
+            logEvent: jest.fn()
+        }
+
+        beforeEach( () => {
+            EventLogger.reset()
+        });
+
+        afterEach( ()=> {
+            jest.clearAllMocks();            
+        })
+
+
+        test('log', ()=> {
+            let mock = new MockAdapter ();
+            mock.log = jest.fn();
+
+            EventLogger.useExternalLogger(MockLogger);
+            EventLogger.registerAdapter(mock);
+
+            let logger = new EventLogger('test');    
+            logger.log( 'some message');
+            expect(MockLogger.log).toHaveBeenCalledWith('some message');
+            expect(MockLogger.logEvent).not.toHaveBeenCalled();
+            expect(mock.log).not.toHaveBeenCalled();
+        })
+
+        test('logEvent', ()=> {
+            let mock = new MockAdapter ();
+            mock.log = jest.fn();
+
+            EventLogger.useExternalLogger(MockLogger);
+            EventLogger.registerAdapter(mock);
+
+            let logger = new EventLogger('test');    
+            logger.logEvent( {message:'some message',b:1});
+            expect(MockLogger.logEvent).toHaveBeenCalledWith({message:'some message',b:1},undefined);
+            expect(MockLogger.log).not.toHaveBeenCalled();
+            expect(mock.log).not.toHaveBeenCalled();
+        })
+
+
+        test('reset', ()=> {
+            let mock = new MockAdapter ();
+            mock.log = jest.fn();
+
+            EventLogger.useExternalLogger(MockLogger);
+            EventLogger.registerAdapter(mock);
+
+            let logger = new EventLogger('test');    
+
+            logger.log( 'some message');
+            expect(mock.log).not.toHaveBeenCalled();
+
+            MockLogger.log.mockClear()
+            MockLogger.logEvent.mockClear()
+
+            EventLogger.reset();
+            EventLogger.registerAdapter(mock);
+            logger.log( '2nd message');
+            expect(MockLogger.log).not.toHaveBeenCalled();
+            expect(MockLogger.logEvent).not.toHaveBeenCalled();
+            expect(mock.log).toHaveBeenCalledWith('test', { message:'2nd message',ts:expect.anything()},expect.anything());
+
+
+        })
+
+
+    });
+
+});
