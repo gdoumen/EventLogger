@@ -13,6 +13,7 @@ describe('ConsoleAdapter',()=>{
 
     beforeEach(()=>{
         EventLogger.registerAdapter( new ConsoleAdapter);
+        jest.clearAllMocks();
         console.log = jest.fn();
     })
 
@@ -35,8 +36,7 @@ describe('ConsoleAdapter',()=>{
         let LOG = new EventLogger("app");
         LOG.log('test')
     
-        expect(mocked(console.log).mock.calls[0][0]).toBe('app\ttest');
-        expect(mocked(console.log).mock.calls[0][1]).toBeUndefined
+        expect(console.log).toHaveBeenCalledWith('app\ttest');
     });
     test('event log',()=> {
         let LOG = new EventLogger("app");

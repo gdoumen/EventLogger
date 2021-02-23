@@ -4,6 +4,8 @@ import {isClass,isFunc,isSymbol} from './utils'
 
 const MAX_DEPTH=7;
 
+let __debug = false;
+
 const GlobalConfigDefault = {
     autoTimeStamp : true,
     lazyLoading:false,
@@ -159,9 +161,14 @@ export default class EventLogger implements EventLoggerInterface{
             adapters.forEach( adapter => {
                 try {
                     this.events.forEach( ev => {
-                        ev.data = this.filterBlackList(ev.data);
-                        ev.event = this.filterBlackList(ev.event);
-                        adapter.log(name,ev.data,ev) 
+                        let {data,event,context} = ev;
+                        //console.log( data, event);
+                        data = this.filterBlackList(data);
+                        event = this.filterBlackList(event);
+                        
+                        ev.event = event;
+
+                        adapter.log(name,data,ev) 
                     })                    
                 }
                 catch (err) {
@@ -174,6 +181,7 @@ export default class EventLogger implements EventLoggerInterface{
         
     }
 
+
     filterBlackList(o:any,depth:number=0):Object {
 
         let str:string = '';
@@ -185,11 +193,30 @@ export default class EventLogger implements EventLoggerInterface{
         if ( isFunc(o) ) return;
         if ( isSymbol(o) ) return;
 
+
+
         if ( typeof(o)==='object' && !Array.isArray(o)) {
+
+            try {
+                JSON.stringify(o)
+            }
+            catch(err) {
+                const keys = Object.keys(o);
+                const values = Object.values(o);
+
+                keys.forEach( (key,i) => {
+                    if ( typeof values[i] !=='object')  {    
+                        res[key]=values[i];
+                    }
+                })
+                return res;
+            }
+
+
             let keys = Object.keys(o);
             let values = Object.values(o);
             keys.forEach( (key,i) => {
-
+    
                 const isBlackList = (EventLogger.KeyBlackList.find( val => val===key)!==undefined)
     
     
@@ -197,8 +224,9 @@ export default class EventLogger implements EventLoggerInterface{
                     res[key]= null;
                 else if ( values[i] === undefined )
                     res[key]= undefined;
-                else if ( typeof values[i] ==='object') 
+                else if ( typeof values[i] ==='object')  {    
                     res[key]= isBlackList ? '**filtered**' : this.filterBlackList(values[i],depth+1);
+                }
                 else if ( isClass(values[i]) ) res[key]=values[i];
                 else if ( isFunc(values[i]) ) return;
                 else if ( isSymbol(values[i]) ) return;

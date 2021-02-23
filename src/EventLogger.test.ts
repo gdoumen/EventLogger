@@ -605,6 +605,18 @@ describe('filterBlackList',()=> {
 
         })
 
+        test('circular', ()=> {
+            let logger = new EventLogger('test');    
+            EventLogger.setKeyBlackList( ['b']) 
+            let x = {}
+            const ev = { a: { a1:{ a2: x,b:'123' }}}
+            ev.a.a1.a2 = ev;
+            const o = logger.filterBlackList( ev )
+            //expect (o).toEqual( {a:{ a1: {a2:'[circular]',b:'**filtered**'}}}  )    
+            expect (o).toEqual({});
+
+        })
+
     })
     
 })
