@@ -91,6 +91,18 @@ describe( 'get', ()=> {
         expect(res.data).toEqual({a:'got it',z:'test',b:2});
     })
 
+
+    test('depth=0',()=>{
+        const app = new Context('app')
+        const page = new Context('page', app)
+        app.setValue('a',1)
+        app.setValue('b',2)
+
+        const res = page.get({message:'test'},0)
+        expect(res.data).toEqual({message:'test'})
+    })
+
+
 })
 
 describe( 'getValue', ()=> {

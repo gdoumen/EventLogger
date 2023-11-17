@@ -59,10 +59,11 @@ export default class BaseAdapter implements LogAdapter {
         try {
 
             if ( raw!==undefined && this.props.depth!==undefined) {
-                let {name,data} = raw.context.get(rawEvent,this.props.depth);
+                
+                let {name,data} = raw.context.get(raw.event,this.props.depth);
                 event = data;
+                event.context = contextName
             }
-
 
             let ts;
             let message;

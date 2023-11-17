@@ -1,14 +1,13 @@
 import FileAdapter from "./FileAdapter"
 import EventLogger from '../EventLogger'
-import {mocked} from 'ts-jest/utils'
+
 
 var fs = require('fs');
 
-let originalLog = console.log;
 
 describe('Constructor',()=>{
 
-    var testAdapter;
+    let testAdapter;
 
 
     afterEach(()=>{
@@ -57,14 +56,16 @@ describe('logging',()=>{
 
     afterEach(()=>{
         EventLogger.reset();
+        jest.clearAllMocks();
     })
 
 
     test('simple log',()=> {
         let LOG = new EventLogger("app");
         LOG.log('test')
-        let calls = mocked(fs.appendFile).mock.calls;
-        expect(calls[0][1]).toMatch(/{message:'test',ts:.+,context:'app'}\n/)
+        
+        expect(fs.appendFile).toHaveBeenCalledWith('logfile.json',expect.stringMatching(/{message:'test',ts:.+,context:'app'}\n/),"utf8", expect.anything())
+        
     });
 
     test('simple log - No Timestamp',()=> {
@@ -72,16 +73,16 @@ describe('logging',()=>{
 
         let LOG = new EventLogger("app");
         LOG.log('test')
-        let calls = mocked(fs.appendFile).mock.calls;
-        expect(calls[0][1]).toBe("{message:'test',context:'app'}\n")
+
+        expect(fs.appendFile).toHaveBeenCalledWith('logfile.json',"{message:'test',context:'app'}\n","utf8",expect.anything())
     });
     
     test('event log',()=> {
         EventLogger.setGlobalConfig('autoTimeStamp',false);
         let LOG = new EventLogger("app");
         LOG.logEvent({message:'test1',str:'XX',int:1, boolean:true, object:{ a:1, b:2}, array:[ '1','2'], complex:[{z:1,y:[1,2]},{x:'10'}] })
-        let calls = mocked(fs.appendFile).mock.calls;
-        expect(calls[0][1]).toBe("{message:'test1',str:'XX',int:1,boolean:true,object:{a:1,b:2},array:['1','2'],complex:[{z:1,y:[1,2]},{x:'10'}],context:'app'}\n")    
+
+        expect(fs.appendFile).toHaveBeenCalledWith("logfile.json","{message:'test1',str:'XX',int:1,boolean:true,object:{a:1,b:2},array:['1','2'],complex:[{z:1,y:[1,2]},{x:'10'}],context:'app'}\n","utf8", expect.anything())
     });
 
 
@@ -92,8 +93,8 @@ describe('logging',()=>{
 
         let LOG = new EventLogger("app");
         LOG.log('test')
-        let calls = mocked(fs.appendFile).mock.calls;
-        expect(calls[0][0]).toBe('testfile.json')    
+
+        expect(fs.appendFile.mock.calls[0][0]).toBe('testfile.json')        
     });
 
 
@@ -105,7 +106,7 @@ describe('logging',()=>{
 
         let LOG = new EventLogger("app");
         LOG.log('test')
-        expect(mockFS.appendFile).toBeCalled();
+        expect(mockFS.appendFile).toHaveBeenCalled();
     });
 
 }) 
@@ -125,18 +126,19 @@ describe('ConsoleAdapter with Context filtering',()=>{
 
     afterEach(()=>{
         EventLogger.reset();
+        
     })
 
 
     test('simple log',()=> {
 
-        let parent = new EventLogger("app");
-        let LOG = new EventLogger("page");
-        parent.set({a:1,b:2})
+        const app = new EventLogger("app");
+        const parent = new EventLogger("dialog");
+        let LOG = new EventLogger("page","dialog");
+        app.set({a:1,b:2})
         LOG.log('test')
 
-        let calls = mocked(fs.appendFile).mock.calls;
-        expect(calls[0][1]).toMatch(/{message:'test',ts:.+,context:'page'}\n/)
+        expect(fs.appendFile).toHaveBeenCalledWith( "logfile.json",expect.stringMatching(/{message:'test',ts:.+,context:'page'}\n/),"utf8",expect.anything())
     });
 
     test('simple log with values stored in context',()=> {
@@ -147,8 +149,7 @@ describe('ConsoleAdapter with Context filtering',()=>{
         LOG.set({x:1})
         LOG.log('test')
     
-        let calls = mocked(fs.appendFile).mock.calls;
-        expect(calls[0][1]).toMatch(/{x:1,message:'test',context:'page'}\n/)
+        expect(fs.appendFile).toHaveBeenCalledWith( "logfile.json", expect.stringMatching(/{x:1,message:'test',context:'page'}\n/),"utf8",expect.anything())
     });
 
 });

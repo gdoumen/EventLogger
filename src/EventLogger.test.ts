@@ -261,6 +261,14 @@ describe ('set/setContext',()=> {
         expect(logger._get()).toEqual({y:2})
     })
 
+    test('set with null', ()=> {
+        let logger = new EventLogger('test');
+
+        logger.set({x:1, y:2, z:3});
+        
+        logger.set({y:3, z:null});
+        expect(logger._get()).toEqual({x:1,y:3})
+    })
 
 
 })
@@ -327,6 +335,23 @@ describe ('setGlobal',()=> {
         logger1.setGlobal({z:2});
         expect(logger1._get()).toEqual({x:1,z:2})
         expect(logger2._get()).toEqual({x:1,z:1})
+    })
+
+
+    test('setGlobal with null', ()=> {
+        let logger1 = new EventLogger('test1');
+        let logger2 = new EventLogger('test2'); // test1 is implicit parent
+        let logger = new EventLogger('test','test2');
+        logger1.setGlobal({z:2});
+
+        logger1.set({x:1, y:2, logger:'1'});
+        logger2.set({x:1, y:2, logger:'2'});
+        logger.set({x:1, y:2});
+        
+        logger.setGlobal({logger:null, a:1, z:null});
+        expect(logger1._get()).toEqual({x:1,y:2,a:1,logger:'1'})
+        expect(logger2._get()).toEqual({x:1,y:2,a:1,logger:'2'})
+        expect(logger._get()).toEqual({x:1,y:2,a:1, logger:'2'})
     })
 
 
