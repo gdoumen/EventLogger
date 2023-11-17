@@ -265,6 +265,29 @@ describe ('set/setContext',()=> {
 
 })
 
+describe ('unset',()=> {
+
+    let logger
+
+    beforeEach( ()=>{
+        logger = new EventLogger('test');
+        logger.set({x:1});
+        logger.set({y:2});
+    })
+
+    afterEach( ()=> {
+        EventLogger.reset();
+    })
+    test('no parent', ()=> {
+        let logger = new EventLogger('test');
+
+        logger.unset('x')
+        expect(logger._get()).toEqual({y:2})
+       
+    })
+})
+
+
 describe ('setGlobal',()=> {
 
     afterEach( ()=> {
@@ -306,6 +329,33 @@ describe ('setGlobal',()=> {
         expect(logger2._get()).toEqual({x:1,z:1})
     })
 
+
+})
+
+describe ('unsetGlobal',()=> {
+
+    afterEach( ()=> {
+        EventLogger.reset();
+    })
+
+
+    test('multiple loggers', ()=> {
+        let loggerApp = new EventLogger('app');
+        let logger1 = new EventLogger('test1'); // app is implicit parent
+        let logger2 = new EventLogger('test2'); // app is implicit parent
+
+        logger1.set({x:1});
+        logger2.set({z:1});
+        logger1.setGlobal({y:2});
+        expect(logger2._get()).toEqual({z:1,y:2})
+        expect(loggerApp._get()).toEqual({y:2})
+
+
+        logger1.unsetGlobal('y')
+        expect(logger2._get()).toEqual({z:1})
+        expect(loggerApp._get()).toEqual({})
+        
+    })
 
 })
 
@@ -433,12 +483,12 @@ describe ( 'key blacklist' ,() => {
         scanLogger.log(`2nd message` )
         expect(mock.log).toHaveBeenNthCalledWith(2,'Daum8i Scanner',{message:'2nd message'},expect.anything())
         expect( isFunc(scanLogger['context'].get) ).toBe(true);
-        expect( isFunc(scanLogger['context'].getParent().get) ).toBe(true);
+        expect( isFunc(scanLogger['context'].getParent()?.get) ).toBe(true);
 
         scanLogger.log(`3rd message` )
         expect(mock.log).toHaveBeenNthCalledWith(3,'Daum8i Scanner',{message:'3rd message'},expect.anything())
         expect( isFunc(scanLogger['context'].get) ).toBe(true);
-        expect( isFunc(scanLogger['context'].getParent().get) ).toBe(true);
+        expect( isFunc(scanLogger['context'].getParent()?.get) ).toBe(true);
     });
 
 
