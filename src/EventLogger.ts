@@ -1,3 +1,4 @@
+import { type } from 'os';
 import Context from './Context'
 import LogAdapter,{FilterFunc,registerLogAdapter,getLogAdapters,resetAdapters} from './LogAdapter';
 import {isClass,isFunc,isSymbol} from './utils'
@@ -100,11 +101,42 @@ export default class EventLogger implements EventLoggerInterface{
     set(payload:any) {
         if ( !this.isReady )
             this.init();
+
+        this.filterUnsets(payload, this.unset.bind(this) );
+
+        
         this.context.update(payload)
+    }
+
+    private filterUnsets(payload: any, unsetFn:(key:string)=>void) {
+
+        // istanbul ignore next
+        if (typeof payload !== 'object')
+            return
+         
+        const keys = Object.keys(payload);
+        keys.forEach(key => {
+            const value = payload[key];
+            if (value === null) {
+                unsetFn(key);
+                delete payload[key];
+            }
+        });
+        
+    }
+
+    unset(key:string) {
+        if ( !this.isReady )
+            return;
+        this.context.deleteValue(key)
     }
 
     setGlobal(payload:any): void {
         globalLogger.set(payload);
+    }
+
+    unsetGlobal(payload:any): void {
+        globalLogger.unset(payload);
     }
 
 
